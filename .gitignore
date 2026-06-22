@@ -1,0 +1,14 @@
+# Node modules (if any extension has dependencies)
+node_modules/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+*.swp
+*.swo
+*~
+
+# Never commit real settings with secrets
+# settings.json should only contain non-sensitive config

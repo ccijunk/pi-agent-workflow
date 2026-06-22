@@ -1,0 +1,10 @@
+{
+  "theme": "dark",
+  "defaultProvider": "opencode-go",
+  "defaultModel": "deepseek-v4-flash",
+  "defaultThinkingLevel": "off",
+  "scopedModels": ["claude-*", "gpt-4o", "deepseek-*"],
+  "enableSkillCommands": true,
+  "steeringMode": "one-at-a-time",
+  "followUpMode": "one-at-a-time"
+}
