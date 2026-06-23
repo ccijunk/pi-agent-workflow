@@ -40,7 +40,7 @@
 ### personal-base (English learning & content curation)
 - Repo: https://github.com/ccijunk/personal-base.git
 - Goal: Learn English via real-world web content (articles, podcasts, code repos)
-- Three pillars: AI+Code (40%), Investing (40%), Company/Career (20%)
+- Three pillars: AI+Agent+K8s+Code (40%), Investing (40%), Company/Career (20%)
 - Rules live in RULES.md — ALWAYS read this first before curating
 - **Curator** fetches & filters content: `uv run python -m curator.main all`
 - **Secretary** tracks progress & adjusts plans: `uv run python -m secretary status`
