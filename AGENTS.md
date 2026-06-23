@@ -31,3 +31,13 @@
 - CI: GitHub Actions in .github/workflows/
 - PR titles must have prefix: [Feature], [BugFix], [CI], [Test], [Doc]
 - Tests need Ascend NPU hardware (not locally runnable)
+
+### personal-base (English learning & content curation)
+- Repo: https://github.com/ccijunk/personal-base.git
+- Goal: Learn English via real-world web content (articles, podcasts, code repos)
+- Three pillars: AI+Code (40%), Investing (40%), Company/Career (20%)
+- Rules live in RULES.md — ALWAYS read this first before curating
+- Curation tool: `curator/` — run with `uv run python -m curator.main all`
+- Daily curated output: `curated/daily/YYYY/MM/YYYY-MM-DD.md`
+- Sources: `curator/feeds.yaml` (verified working RSS feeds)
+- When asked about English learning or content curation, consult RULES.md
