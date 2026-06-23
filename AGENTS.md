@@ -5,6 +5,11 @@
 - I use `uv` for Python package management, `nvm` for Node.js
 - I work on AI infrastructure, LLM inference, and agent systems
 
+## Handling any repo
+- **REPO_GUIDE.md** — read this first when you encounter a repo you don't recognize
+- It tells you how to discover, clone, understand, and work with any repo
+- AGENTS.md below lists only the most frequently-used repos for quick reference
+
 ## Project conventions
 
 ### daily-record (Markdown knowledge base)
