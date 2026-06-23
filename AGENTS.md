@@ -42,7 +42,9 @@
 - Goal: Learn English via real-world web content (articles, podcasts, code repos)
 - Three pillars: AI+Code (40%), Investing (40%), Company/Career (20%)
 - Rules live in RULES.md — ALWAYS read this first before curating
-- Curation tool: `curator/` — run with `uv run python -m curator.main all`
-- Daily curated output: `curated/daily/YYYY/MM/YYYY-MM-DD.md`
+- **Curator** fetches & filters content: `uv run python -m curator.main all`
+- **Secretary** tracks progress & adjusts plans: `uv run python -m secretary status`
+- Workflow: `secretary plan` → read → `secretary log` → `secretary status`
 - Sources: `curator/feeds.yaml` (verified working RSS feeds)
+- Tracking data: `secretary/state.json`
 - When asked about English learning or content curation, consult RULES.md
