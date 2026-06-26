@@ -44,7 +44,8 @@
 - Rules live in RULES.md — ALWAYS read this first before curating
 - **Curator** fetches & filters content: `uv run python -m curator.main all`
 - **Secretary** tracks progress & adjusts plans: `uv run python -m secretary status`
-- Workflow: `secretary plan` → read → `secretary log` → `secretary status`
+- **Website** learning dashboard: `uv run python -m website.main` → http://localhost:8192
+- Workflow: `secretary plan` → read → `secretary log` → check dashboard
 - Sources: `curator/feeds.yaml` (verified working RSS feeds)
 - Tracking data: `secretary/state.json`
 - When asked about English learning or content curation, consult RULES.md
