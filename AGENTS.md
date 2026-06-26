@@ -13,6 +13,7 @@
 ## Project conventions
 
 ### daily-record (Markdown knowledge base)
+- Path: `subrepos/daily-record/` (git submodule)
 - Each .md file covers one topic area
 - Subdirs for multi-file topics (agent/, virtual-machine/, leetcode/)
 - Daily logs named 日志YYYY.M.D.md
@@ -38,6 +39,7 @@
 - Tests need Ascend NPU hardware (not locally runnable)
 
 ### personal-base (English learning & content curation)
+- Path: `subrepos/personal-base/` (git submodule)
 - Repo: https://github.com/ccijunk/personal-base.git
 - Goal: Learn English via real-world web content (articles, podcasts, code repos)
 - Three pillars: AI+Agent+K8s+Code (40%), Investing (40%), Company/Career (20%)
