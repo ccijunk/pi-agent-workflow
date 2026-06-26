@@ -94,3 +94,19 @@ bash setup.sh --unlink
 # Or just delete the broken symlinks manually
 find ~/.pi/agent/ -type l -xtype l -delete
 ```
+
+
+## Cloning with all knowledge repos
+
+This repo includes daily-record and personal-base as git submodules under `subrepos/`:
+```bash
+git clone --recursive https://github.com/ccijunk/pi-agent-workflow.git
+
+# Or if already cloned:
+git submodule update --init --recursive
+```
+
+Use `sync-knowledge.sh` to commit and push all subrepos at once:
+```bash
+bash sync-knowledge.sh "daily log 2026.6.26"
+```

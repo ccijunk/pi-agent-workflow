@@ -51,3 +51,17 @@
 - Sources: `curator/feeds.yaml` (verified working RSS feeds)
 - Tracking data: `secretary/state.json`
 - When asked about English learning or content curation, consult RULES.md
+
+## Cloning with all knowledge repos
+
+This repo uses git submodules for daily-record and personal-base:
+```bash
+# First time -- clone everything
+git clone --recursive https://github.com/ccijunk/pi-agent-workflow.git
+
+# If already cloned without --recursive
+git submodule update --init --recursive
+
+# Daily sync (commit & push all subrepos + update pointers)
+bash sync-knowledge.sh "your commit message"
+```
