@@ -1,0 +1,6 @@
+[submodule "subrepos/daily-record"]
+	path = subrepos/daily-record
+	url = https://github.com/ccijunk/daily-record.git
+[submodule "subrepos/personal-base"]
+	path = subrepos/personal-base
+	url = https://github.com/ccijunk/personal-base.git
