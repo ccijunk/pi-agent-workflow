@@ -23,7 +23,6 @@ GITHUB_USER="ccijunk"
 ESSENTIAL=(
     "pi-agent-workflow"      # Main harness — always first
     "personal-base"          # English learning curator
-    "daily-record"           # Knowledge base
     "life-system"            # Life OS
 )
 

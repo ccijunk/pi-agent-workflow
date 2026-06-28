@@ -118,7 +118,6 @@ This is NOT an exhaustive list — it's a map of what categories exist so pi kno
 These repos have active AGENTS.md or are referenced in the main workflow:
 - `pi-agent-workflow` — The harness we're in
 - `personal-base` — English learning curation (has RULES.md + AGENTS.md)
-- `daily-record` — Knowledge base (has conventions in AGENTS.md)
 
 ### Likely Active
 Check if needed:

@@ -98,7 +98,7 @@ find ~/.pi/agent/ -type l -xtype l -delete
 
 ## Cloning with all knowledge repos
 
-This repo includes daily-record and personal-base as git submodules under `subrepos/`:
+This repo includes personal-base as a git submodule under `subrepos/`:
 ```bash
 git clone --recursive https://github.com/ccijunk/pi-agent-workflow.git
 

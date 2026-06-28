@@ -1,8 +1,8 @@
 ---
-description: Write a daily log entry in daily-record format
+description: Write a daily log entry in knowledge-base format
 argument-hint: "<topic> [more topics...]"
 ---
-Write a new daily log file named `日志$(date +%Y.%-m.%-d).md` in the daily-record repo.
+Write a new daily log file named `日志$(date +%Y.%-m.%-d).md` in `subrepos/personal-base/knowledge/`.
 
 Use the format from existing logs:
 - Date heading: # YYYY.M.D

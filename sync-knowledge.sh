@@ -8,8 +8,8 @@
 #   bash sync-knowledge.sh                                      # uses "sync" as fallback message
 #
 # This avoids the two-step friction of submodules:
-#   (cd subrepos/daily-record && git add ... && git push)
-#   git add subrepos/daily-record && git commit && git push
+#   (cd subrepos/personal-base && git add ... && git push)
+#   git add subrepos/personal-base && git commit && git push
 #
 # One command does it all.
 

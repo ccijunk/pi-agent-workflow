@@ -12,10 +12,10 @@
 
 ## Project conventions
 
-### daily-record (Markdown knowledge base)
-- Path: `subrepos/daily-record/` (git submodule)
+### knowledge base (Markdown, inside personal-base)
+- Path: `subrepos/personal-base/knowledge/` (Obsidian vault)
 - Each .md file covers one topic area
-- Subdirs for multi-file topics (agent/, virtual-machine/, leetcode/)
+- Subdirs for multi-file topics (agent/, virtual-machine/, leetcode/, 项目/)
 - Daily logs named 日志YYYY.M.D.md
 - Images stored alongside notes
 
@@ -54,7 +54,7 @@
 
 ## Cloning with all knowledge repos
 
-This repo uses git submodules for daily-record and personal-base:
+This repo uses a git submodule for personal-base:
 ```bash
 # First time -- clone everything
 git clone --recursive https://github.com/ccijunk/pi-agent-workflow.git
