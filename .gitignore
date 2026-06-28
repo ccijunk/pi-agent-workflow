@@ -12,3 +12,8 @@ Thumbs.db
 
 # Never commit real settings with secrets
 # settings.json should only contain non-sensitive config
+
+# Generated session artifacts
+.agents/
+docs/
+skills/plan/
