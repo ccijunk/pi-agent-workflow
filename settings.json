@@ -11,5 +11,8 @@
   "enableSkillCommands": true,
   "steeringMode": "one-at-a-time",
   "followUpMode": "one-at-a-time",
-  "lastChangelogVersion": "0.80.3"
+  "lastChangelogVersion": "0.80.3",
+  "packages": [
+    "npm:@blackbelt-technology/pi-agent-dashboard"
+  ]
 }

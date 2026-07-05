@@ -1,3 +1,8 @@
+---
+name: write-plan-for-small-model
+description: Use a large model to write a verify-driven implementation plan that a small/weak model can execute step by step. Each task is a "quick verify" unit with its own code piece, a verify harness, and a single entry point.
+---
+
 # Write Plan for Small Model
 
 Write a verify-driven implementation plan that a small/weak model can execute step by step. Each task is a "quick verify" unit with its own code piece, a verify harness, and a single entry point. The plan is finished only when every verify passes.
@@ -74,16 +79,16 @@ If a task from the plan is still too large when it's time to execute:
 
 ```
 Parent Plan:
-  Verify 1: ✓ pass
-  Verify 2: ← TOO LARGE for small model
-     │
-     └─ Recursive split → Sub-Plan:
-         Verify 2a: ✓ pass
-         Verify 2b: → split again...
-           Verify 2b-i:  ✓ pass
-           Verify 2b-ii: ✓ pass
-         Verify 2c: ✓ pass
-  Verify 2: ✓ pass (all sub-verifies passed)
+  Verify 1: pass
+  Verify 2: TOO LARGE for small model
+     |
+     Recursive split -> Sub-Plan:
+         Verify 2a: pass
+         Verify 2b: split again
+           Verify 2b-i: pass
+           Verify 2b-ii: pass
+         Verify 2c: pass
+  Verify 2: pass (all sub-verifies passed)
   Verify 3: ...
 ```
 

@@ -1,3 +1,8 @@
+---
+name: vocab-saver
+description: Save new vocabulary words to the learning tracker when the user asks for definitions or wants to store terms they are learning
+---
+
 # Vocab Saver Skill
 
 When the user asks "what does X mean?" or "meaning of X" or "save X as vocabulary" or "add X to my vocabulary", do this:
