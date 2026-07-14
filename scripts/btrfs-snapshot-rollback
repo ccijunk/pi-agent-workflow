@@ -1,0 +1,189 @@
+#!/usr/bin/env bash
+# btrfs-snapshot-rollback — Replace the main @ subvolume with a snapshot
+#
+# USAGE:
+#   1. Boot the snapshot from GRUB first:
+#        GRUB → "Arch Linux snapshots" → <choose snapshot>
+#   2. Then run this script FROM WITHIN the booted snapshot:
+#        sudo ./btrfs-snapshot-rollback
+#   3. Reboot — you're now on the new permanent @
+#
+# WHY BOOT FIRST? You can't replace @ while it's mounted as /.
+# By booting the snapshot, @ sits idle on disk and can be safely swapped.
+#
+# SAFETY: The old @ is preserved as @.bak.YYYYMMDD-HHMMSS
+
+set -euo pipefail
+
+BTRFS_DEV="/dev/nvme0n1p3"
+ROOT_SUBVOL="@"
+TOPLEVEL_MNT="/tmp/btrfs-toplevel"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BOLD='\033[1m'
+NC='\033[0m'
+
+die()   { echo -e "${RED}ERROR: $*${NC}" >&2; exit 1; }
+info()  { echo -e "${GREEN}→${NC} $*"; }
+warn()  { echo -e "${YELLOW}⚠${NC} $*"; }
+step()  { echo -e "\n${BOLD}─── $* ───${NC}"; }
+
+# ── Pre-flight ──────────────────────────────────────────────────────
+
+[[ $(id -u) -eq 0 ]] || die "Must run as root (sudo)"
+
+findmnt -n -o FSTYPE / | grep -q btrfs || die "Root is not Btrfs"
+
+# ── Detect: are we in a snapshot or on @? ──────────────────────────
+
+CURRENT_SUBVOL=$(findmnt -n -o SOURCE / | sed 's/.*\[//;s/\]//')
+# SOURCE looks like: /dev/nvme0n1p3[/.snapshots/3/snapshot]
+# or:                 /dev/nvme0n1p3[/@]
+
+info "Current root subvolume: ${CURRENT_SUBVOL}"
+
+if [[ "$CURRENT_SUBVOL" == "@" ]] || [[ "$CURRENT_SUBVOL" == "/@" ]]; then
+    # We're running on the main @ — can't replace it live.
+    # Offer snapper-based rollback instead.
+    echo ""
+    warn "You are currently running on the main @ subvolume."
+    warn "You can't replace @ while it's in use."
+    echo ""
+    echo "  Option 1 (recommended): Reboot → pick snapshot in GRUB → run this script"
+    echo "  Option 2: Use snapper rollback (sets default subvol, reboot):"
+    echo ""
+    
+    if command -v snapper &>/dev/null && snapper -c root list &>/dev/null; then
+        echo "    Available snapshots:"
+        snapper -c root list | tail -n +3 | head -20
+        echo ""
+        read -rp "    Enter snapshot number to rollback to (or Enter to quit): " snap_num
+        [[ -n "$snap_num" ]] || exit 0
+        info "Running: snapper -c root rollback ${snap_num} ..."
+        snapper -c root rollback "$snap_num"
+        snapper -c root list | tail -5
+        echo ""
+        info "Default subvolume updated. Reboot now:"
+        info "  sudo reboot"
+        exit 0
+    else
+        die "snapper not available. Boot the snapshot from GRUB first, then re-run this script."
+    fi
+fi
+
+# ── We're on a snapshot — proceed with direct replacement ───────────
+
+SNAPSHOT_PATH="$CURRENT_SUBVOL"
+# Normalize: /.snapshots/N/snapshot or .snapshots/N/snapshot
+SNAPSHOT_PATH="${SNAPSHOT_PATH#/}"
+
+echo ""
+info "Snapshot path on disk: ${SNAPSHOT_PATH}"
+echo ""
+echo -e "  ${BOLD}This will:${NC}"
+echo "    1. Rename @ → @.bak (preserved as backup)"
+echo "    2. Create a new read-write @ from this snapshot"
+echo "    3. Update GRUB default to boot the new @"
+echo "    4. Prompt you to reboot"
+echo ""
+
+read -rp "  ${YELLOW}Proceed? [y/N]${NC} " confirm
+[[ "$confirm" =~ ^[Yy]$ ]] || exit 0
+
+# ── Step 1: Mount Btrfs top-level ───────────────────────────────────
+
+step "Mounting Btrfs top-level (subvolid=5)"
+mkdir -p "$TOPLEVEL_MNT"
+mount -o subvolid=5 "$BTRFS_DEV" "$TOPLEVEL_MNT"
+
+# Verify what we see
+info "Top-level contents:"
+ls -la "$TOPLEVEL_MNT/" | grep -E '^d|@'
+
+# Check that @ exists
+[[ -d "$TOPLEVEL_MNT/$ROOT_SUBVOL" ]] || die "@ subvolume not found at toplevel"
+
+# ── Step 2: Verify @ is NOT currently mounted ───────────────────────
+
+if findmnt "$TOPLEVEL_MNT/$ROOT_SUBVOL" &>/dev/null; then
+    die "@ is still mounted! Something is wrong. Aborting."
+fi
+
+# ── Step 3: Backup current @ ────────────────────────────────────────
+
+BACKUP_NAME="${ROOT_SUBVOL}.bak.$(date +%Y%m%d-%H%M%S)"
+step "Backing up @ → ${BACKUP_NAME}"
+mv "$TOPLEVEL_MNT/$ROOT_SUBVOL" "$TOPLEVEL_MNT/$BACKUP_NAME"
+info "Old @ preserved as ${BACKUP_NAME}"
+
+# ── Step 4: Create new @ from snapshot ──────────────────────────────
+
+step "Creating new @ from snapshot"
+SNAP_SRC="${TOPLEVEL_MNT}/${SNAPSHOT_PATH}"
+
+if [[ ! -d "$SNAP_SRC" ]]; then
+    # Cleanup: restore @
+    mv "$TOPLEVEL_MNT/$BACKUP_NAME" "$TOPLEVEL_MNT/$ROOT_SUBVOL"
+    umount "$TOPLEVEL_MNT"
+    die "Snapshot path not found: ${SNAP_SRC}"
+fi
+
+btrfs subvolume snapshot "$SNAP_SRC" "$TOPLEVEL_MNT/$ROOT_SUBVOL"
+info "New @ created from ${SNAPSHOT_PATH}"
+
+# ── Step 5: Set default subvolume to @ ──────────────────────────────
+
+step "Setting default subvolume to @"
+SUBVOL_ID=$(btrfs subvolume show "$TOPLEVEL_MNT/$ROOT_SUBVOL" | awk '/Subvolume ID:/{print $NF}')
+btrfs subvolume set-default "$SUBVOL_ID" "$TOPLEVEL_MNT"
+info "Default subvolume set to ID ${SUBVOL_ID} (@)"
+
+# ── Step 6: Clean fstab (snapshot boots may mount / read-only) ─────
+
+step "Ensuring new @ is read-write in fstab"
+# The snapshot might have been booted ro; ensure the new @'s fstab has rw
+FSTAB="${TOPLEVEL_MNT}/${ROOT_SUBVOL}/etc/fstab"
+if [[ -f "$FSTAB" ]]; then
+    # Replace any ro mount option on / with rw
+    sed -i 's|\bsubvol=/\.snapshots/[^ ]*/snapshot\b|subvol=/@|g' "$FSTAB"
+    # Ensure rw is present for the / entry
+    if grep -E '^[^#].*\s+/\s+btrfs' "$FSTAB" | grep -qv 'rw'; then
+        sed -i 's|^\([^#].*\s/\s*btrfs\s*\)\([^ ]*\)|\1rw,\2|' "$FSTAB"
+    fi
+    info "fstab updated: subvol=/@, rw"
+fi
+
+# ── Step 7: Update GRUB ─────────────────────────────────────────────
+
+step "Regenerating GRUB config"
+# Mount /boot if needed
+if ! findmnt /boot &>/dev/null; then
+    mount /boot 2>/dev/null || true
+fi
+grub-mkconfig -o /boot/grub/grub.cfg 2>/dev/null || warn "grub-mkconfig failed (non-fatal)"
+
+# ── Step 8: Cleanup ─────────────────────────────────────────────────
+
+umount "$TOPLEVEL_MNT"
+rmdir "$TOPLEVEL_MNT"
+
+# ── Done ────────────────────────────────────────────────────────────
+
+echo ""
+echo -e "${GREEN}╔══════════════════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║  ✅ Rollback complete!                                  ║${NC}"
+echo -e "${GREEN}╚══════════════════════════════════════════════════════════╝${NC}"
+echo ""
+echo "  What happened:"
+echo "    • Old @ → ${BACKUP_NAME} (kept as backup)"
+echo "    • Snapshot → new @ (your permanent system)"
+echo ""
+echo "  ${BOLD}Now reboot:${NC}"
+echo "    sudo reboot"
+echo ""
+echo "  To delete the old @ backup later (after verifying everything works):"
+echo "    sudo mount -o subvolid=5 ${BTRFS_DEV} /mnt"
+echo "    sudo btrfs subvolume delete /mnt/${BACKUP_NAME}"
+echo "    sudo umount /mnt"

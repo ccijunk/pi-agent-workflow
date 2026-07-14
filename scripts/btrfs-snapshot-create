@@ -1,0 +1,95 @@
+#!/usr/bin/env bash
+# btrfs-snapshot-create — Create a Btrfs snapshot and add it to GRUB
+# Usage: ./btrfs-snapshot-create [description]
+#
+# After running this, reboot and find the snapshot under:
+#   GRUB → "Arch Linux snapshots" → <your snapshot>
+#
+# Requirements: snapper, grub-btrfs (install: pacman -S snapper snap-pac grub-btrfs)
+
+set -euo pipefail
+
+DESCRIPTION="${1:-manual snapshot $(date '+%Y-%m-%d %H:%M')}"
+BTRFS_DEV="/dev/nvme0n1p3"
+ROOT_SUBVOL="@"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m'
+
+die() { echo -e "${RED}ERROR: $*${NC}" >&2; exit 1; }
+info() { echo -e "${GREEN}→${NC} $*"; }
+warn() { echo -e "${YELLOW}⚠${NC} $*"; }
+
+# ── Pre-flight checks ──────────────────────────────────────────────
+
+[[ $(id -u) -eq 0 ]] || die "Must run as root (sudo)"
+
+# Check we're on btrfs
+findmnt -n -o FSTYPE / | grep -q btrfs || die "Root is not Btrfs"
+
+# Check snapper is installed
+command -v snapper &>/dev/null || die "snapper not installed. Run: sudo pacman -S snapper"
+
+# ── Ensure snapper config exists ────────────────────────────────────
+
+if ! snapper -c root list &>/dev/null; then
+    info "Creating snapper config for / ..."
+    snapper -c root create-config /
+
+    # Enable timeline snapshots if not already
+    snapper -c root set-config \
+        TIMELINE_CREATE=yes \
+        TIMELINE_MIN_AGE=1800 \
+        TIMELINE_LIMIT_HOURLY=5 \
+        TIMELINE_LIMIT_DAILY=7 \
+        TIMELINE_LIMIT_WEEKLY=4 \
+        TIMELINE_LIMIT_MONTHLY=3
+
+    systemctl enable --now snapper-timeline.timer snapper-cleanup.timer 2>/dev/null || true
+    info "Snapper config created and timeline enabled"
+fi
+
+# ── Ensure grub-btrfs is installed ──────────────────────────────────
+
+if ! command -v grub-mkconfig &>/dev/null; then
+    die "grub not installed"
+fi
+
+# ── Create snapshot ─────────────────────────────────────────────────
+
+info "Creating snapshot: $DESCRIPTION"
+SNAP_NUM=$(snapper -c root create -d "$DESCRIPTION" --print-number)
+info "Snapshot #${SNAP_NUM} created in /.snapshots/${SNAP_NUM}/snapshot"
+
+# ── Update GRUB ─────────────────────────────────────────────────────
+
+# Check if grub-btrfsd is running (it auto-updates, but we force a refresh)
+if systemctl is-active --quiet grub-btrfsd 2>/dev/null; then
+    info "grub-btrfsd is running — entries will be auto-generated"
+else
+    # Ensure grub-btrfs is installed for the GRUB script
+    if ! command -v /etc/grub.d/41_snapshots-btrfs &>/dev/null && \
+       ! pacman -Q grub-btrfs &>/dev/null; then
+        warn "grub-btrfs not installed. Install it for GRUB integration:"
+        warn "  sudo pacman -S grub-btrfs"
+        warn "  sudo systemctl enable --now grub-btrfsd"
+        warn "  sudo grub-mkconfig -o /boot/grub/grub.cfg"
+    fi
+fi
+
+# Always regenerate to be safe
+info "Regenerating GRUB config..."
+grub-mkconfig -o /boot/grub/grub.cfg
+
+# ── Done ────────────────────────────────────────────────────────────
+
+echo ""
+echo -e "${GREEN}✅ Snapshot #${SNAP_NUM} created and added to GRUB${NC}"
+echo ""
+echo "  Reboot and look for:"
+echo -e "    ${YELLOW}GRUB → Arch Linux snapshots → ${SNAP_NUM}: ${DESCRIPTION}${NC}"
+echo ""
+echo "  To make this snapshot permanent after booting it, run:"
+echo "    sudo ./btrfs-snapshot-rollback"
