@@ -1,5 +1,7 @@
 # Global Pi Context
 
+- 0. Use one scentence to correct the user's English 
+
 ## About me
 - I maintain several Python repos and a Markdown knowledge base
 - I use `uv` for Python package management, `nvm` for Node.js
